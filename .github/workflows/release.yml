@@ -212,7 +212,7 @@ jobs:
             echo "| Apple Silicon (M1/M2/M3/M4) | [ClawPanel_${VERSION}_aarch64.dmg](${DL}/ClawPanel_${VERSION}_aarch64.dmg) |"
             echo "| Intel | [ClawPanel_${VERSION}_x64.dmg](${DL}/ClawPanel_${VERSION}_x64.dmg) |"
             echo ""
-            echo '> **首次打开提示"无法验证开发者"**：前往 **系统设置 → 隐私与安全性**，点击「仍要打开」。'
+            echo '> **⚠️ 首次打开提示"无法验证开发者"？** 在终端执行：`sudo xattr -rd com.apple.quarantine /Applications/ClawPanel.app`，或前往 **系统设置 → 隐私与安全性** 点击「仍要打开」。'
             echo ""
             echo "### Windows"
             echo "| 格式 | 安装包 |"

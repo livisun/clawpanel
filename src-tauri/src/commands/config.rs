@@ -625,7 +625,7 @@ fn get_uid() -> Result<u32, String> {
 
 /// 重载 Gateway 服务
 /// macOS: launchctl kickstart -k
-/// Windows/Linux: openclaw gateway restart
+/// Windows/Linux: 直接通过进程管理重启（不走慢 CLI）
 #[tauri::command]
 pub async fn reload_gateway() -> Result<String, String> {
     #[cfg(target_os = "macos")]
@@ -646,23 +646,10 @@ pub async fn reload_gateway() -> Result<String, String> {
     }
     #[cfg(not(target_os = "macos"))]
     {
-        use crate::utils::openclaw_command_async;
-        let cli_check = openclaw_command_async().arg("--version").output().await;
-        match cli_check {
-            Ok(o) if o.status.success() => {}
-            _ => return Err("openclaw CLI 未安装，无法重载 Gateway".into()),
-        }
-        let output = openclaw_command_async()
-            .args(["gateway", "restart"])
-            .output()
+        // 直接调用服务管理（进程级别），避免慢 CLI 调用
+        crate::commands::service::restart_service("ai.openclaw.gateway".into())
             .await
-            .map_err(|e| format!("重载失败: {e}"))?;
-        if output.status.success() {
-            Ok("Gateway 已重载".to_string())
-        } else {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            Err(format!("重载失败: {stderr}"))
-        }
+            .map(|_| "Gateway 已重载".to_string())
     }
 }
 
@@ -839,7 +826,8 @@ pub async fn install_gateway() -> Result<String, String> {
 
 /// 卸载 Gateway 服务
 /// macOS: launchctl bootout + 删除 plist
-/// Windows/Linux: openclaw gateway stop
+/// Windows: 直接 taskkill
+/// Linux: pkill
 #[tauri::command]
 pub fn uninstall_gateway() -> Result<String, String> {
     #[cfg(target_os = "macos")]
@@ -859,10 +847,19 @@ pub fn uninstall_gateway() -> Result<String, String> {
             fs::remove_file(&plist).map_err(|e| format!("删除 plist 失败: {e}"))?;
         }
     }
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(target_os = "windows")]
     {
-        // Windows/Linux: 停止 Gateway 服务
-        let _ = openclaw_command().args(["gateway", "stop"]).output();
+        // 直接杀死 gateway 相关的 node.exe 进程，不走慢 CLI
+        let _ = Command::new("taskkill")
+            .args(["/f", "/im", "node.exe", "/fi", "WINDOWTITLE eq openclaw*"])
+            .creation_flags(0x08000000)
+            .output();
+    }
+    #[cfg(target_os = "linux")]
+    {
+        let _ = Command::new("pkill")
+            .args(["-f", "openclaw.*gateway"])
+            .output();
     }
 
     Ok("Gateway 服务已卸载".to_string())

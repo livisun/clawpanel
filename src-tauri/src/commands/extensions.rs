@@ -98,6 +98,20 @@ fn cftunnel_bin() -> String {
     }
 }
 
+/// 创建 cftunnel 命令，Windows 上自动隐藏窗口
+fn cftunnel_cmd(bin: &str) -> Command {
+    #[cfg(target_os = "windows")]
+    {
+        let mut cmd = Command::new(bin);
+        cmd.creation_flags(0x08000000);
+        cmd
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Command::new(bin)
+    }
+}
+
 /// 检测 cftunnel 进程是否在运行（平台相关的补充检测）
 fn check_cftunnel_process() -> Option<(Option<u64>, bool)> {
     #[cfg(target_os = "macos")]
@@ -178,7 +192,7 @@ pub fn get_cftunnel_status() -> Result<Value, String> {
     result.insert("installed".into(), Value::Bool(true));
 
     // 获取状态（单次 CLI 调用）
-    if let Ok(out) = Command::new(&bin).arg("status").output() {
+    if let Ok(out) = cftunnel_cmd(&bin).arg("status").output() {
         let text = String::from_utf8_lossy(&out.stdout);
         let status = parse_cftunnel_status(&text);
         // 从 status 输出中提取版本号（如果有）
@@ -204,7 +218,7 @@ pub fn get_cftunnel_status() -> Result<Value, String> {
     }
 
     // 获取路由列表
-    if let Ok(out) = Command::new(&bin).arg("list").output() {
+    if let Ok(out) = cftunnel_cmd(&bin).arg("list").output() {
         let text = String::from_utf8_lossy(&out.stdout);
         let routes = parse_cftunnel_routes(&text);
         result.insert("routes".into(), Value::Array(routes));
@@ -222,7 +236,7 @@ pub fn cftunnel_action(action: String) -> Result<(), String> {
         "restart" => vec!["restart"],
         _ => return Err(format!("不支持的操作: {action}")),
     };
-    let output = Command::new(&bin)
+    let output = cftunnel_cmd(&bin)
         .args(&args)
         .output()
         .map_err(|e| format!("执行 cftunnel {action} 失败: {e}"))?;
@@ -238,7 +252,7 @@ pub fn cftunnel_action(action: String) -> Result<(), String> {
 pub fn get_cftunnel_logs(lines: Option<u32>) -> Result<String, String> {
     let bin = cftunnel_bin();
     let n = lines.unwrap_or(20).to_string();
-    let output = Command::new(&bin)
+    let output = cftunnel_cmd(&bin)
         .args(["logs", "--tail", &n])
         .output()
         .map_err(|e| format!("读取 cftunnel 日志失败: {e}"))?;

@@ -25,8 +25,8 @@ export async function render() {
       <h1 class="page-title">服务管理</h1>
       <p class="page-desc">管理 OpenClaw 服务、检查更新、配置备份</p>
     </div>
-    <div id="version-bar"></div>
-    <div id="services-list"></div>
+    <div id="version-bar"><div class="stat-card loading-placeholder" style="height:80px;margin-bottom:var(--space-lg)"></div></div>
+    <div id="services-list"><div class="stat-card loading-placeholder" style="height:64px"></div></div>
     <div class="config-section" id="registry-section">
       <div class="config-section-title">npm 源设置</div>
       <div id="registry-bar"></div>
@@ -37,7 +37,7 @@ export async function render() {
       <div id="backup-actions" style="margin-bottom:var(--space-md)">
         <button class="btn btn-primary btn-sm" data-action="create-backup">创建备份</button>
       </div>
-      <div id="backup-list"></div>
+      <div id="backup-list"><div class="stat-card loading-placeholder" style="height:48px"></div></div>
     </div>
   `
 

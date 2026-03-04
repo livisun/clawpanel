@@ -65,11 +65,26 @@ async function loadData(page) {
       // 非 Tauri 环境或 API 不可用，使用 fallback
     }
 
+    // 异步检查 ClawPanel 自身更新
+    let panelUpdateHtml = '<span style="color:var(--text-tertiary)">检查更新中...</span>'
+    api.checkPanelUpdate().then(info => {
+      const panelCard = cards.querySelector('#panel-update-meta')
+      if (!panelCard) return
+      if (info.latest && info.latest !== panelVersion && compareVersions(info.latest, panelVersion) > 0) {
+        panelCard.innerHTML = `<span style="color:var(--accent)">新版本: ${info.latest}</span> <a class="btn btn-primary btn-sm" href="${info.url}" target="_blank" rel="noopener" style="padding:2px 8px;font-size:var(--font-size-xs)">下载更新</a>`
+      } else {
+        panelCard.innerHTML = '<span style="color:var(--success)">已是最新</span>'
+      }
+    }).catch(() => {
+      const panelCard = cards.querySelector('#panel-update-meta')
+      if (panelCard) panelCard.innerHTML = '<span style="color:var(--text-tertiary)">检查更新失败</span>'
+    })
+
     cards.innerHTML = `
       <div class="stat-card">
         <div class="stat-card-header"><span class="stat-card-label">ClawPanel</span></div>
         <div class="stat-card-value">${panelVersion}</div>
-        <div class="stat-card-meta">Tauri v2 桌面应用</div>
+        <div class="stat-card-meta" id="panel-update-meta" style="display:flex;align-items:center;gap:8px">${panelUpdateHtml}</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-header"><span class="stat-card-label">OpenClaw · ${version.source === 'official' ? '官方版' : '汉化版'}</span></div>
@@ -112,6 +127,18 @@ async function loadData(page) {
   } catch {
     cards.innerHTML = '<div class="stat-card"><div class="stat-card-label">加载失败</div></div>'
   }
+}
+
+function compareVersions(a, b) {
+  const pa = a.split('.').map(Number)
+  const pb = b.split('.').map(Number)
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i] || 0
+    const nb = pb[i] || 0
+    if (na > nb) return 1
+    if (na < nb) return -1
+  }
+  return 0
 }
 
 function renderCommunity(page) {

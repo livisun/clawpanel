@@ -13,7 +13,11 @@ export async function render() {
       <h1 class="page-title">Gateway 配置</h1>
       <p class="page-desc">Gateway 是 AI 模型的统一入口，所有应用通过它来调用模型服务</p>
     </div>
-    <div id="gateway-config"></div>
+    <div id="gateway-config">
+      <div class="config-section"><div class="stat-card loading-placeholder" style="height:80px"></div></div>
+      <div class="config-section"><div class="stat-card loading-placeholder" style="height:80px"></div></div>
+      <div class="config-section"><div class="stat-card loading-placeholder" style="height:80px"></div></div>
+    </div>
     <div class="gw-save-bar">
       <button class="btn btn-primary" id="btn-save-gw">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>

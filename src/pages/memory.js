@@ -36,7 +36,7 @@ export async function render() {
         <div style="padding:0 var(--space-sm) var(--space-sm)">
           <button class="btn btn-sm btn-secondary" id="btn-export-zip" style="width:100%">打包下载全部</button>
         </div>
-        <div id="file-tree"></div>
+        <div id="file-tree"><div class="stat-card loading-placeholder" style="height:32px;margin:8px"></div><div class="stat-card loading-placeholder" style="height:32px;margin:8px"></div><div class="stat-card loading-placeholder" style="height:32px;margin:8px"></div></div>
       </div>
       <div class="memory-editor">
         <div class="editor-toolbar">

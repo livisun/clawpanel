@@ -175,6 +175,8 @@ function mockInvoke(cmd, args) {
     set_npm_registry: () => true,
     test_model: ({ modelId }) => `模型 ${modelId} 连通正常 (mock)`,
     list_remote_models: () => ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo', 'o3-mini', 'dall-e-3', 'text-embedding-3-small'],
+    patch_model_vision: () => false,
+    check_panel_update: () => ({ latest: '0.2.0', url: 'https://github.com/qingchencloud/clawpanel/releases' }),
     write_env_file: () => true,
     list_backups: () => [
       { name: 'openclaw-20260226-143000.json', size: 8542, created_at: 1740577800 },
@@ -247,6 +249,8 @@ export const api = {
   checkInstallation: () => cachedInvoke('check_installation', {}, 60000),
   checkNode: () => cachedInvoke('check_node', {}, 60000),
   getDeployConfig: () => cachedInvoke('get_deploy_config'),
+  patchModelVision: () => invoke('patch_model_vision'),
+  checkPanelUpdate: () => invoke('check_panel_update'),
   writeEnvFile: (path, config) => invoke('write_env_file', { path, config }),
 
   // 备份管理

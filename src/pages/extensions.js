@@ -27,12 +27,12 @@ export async function render() {
     <div id="cftunnel-card" class="config-section">
       <div class="config-section-title">cftunnel 内网穿透</div>
       <div class="form-hint" style="margin-bottom:var(--space-md)">通过 Cloudflare Tunnel 将本地服务暴露到公网，无需公网 IP 和端口映射。</div>
-      <div id="cftunnel-content"></div>
+      <div id="cftunnel-content"><div class="stat-card loading-placeholder" style="height:64px"></div></div>
     </div>
     <div id="clawapp-card" class="config-section">
       <div class="config-section-title">ClawApp 移动客户端</div>
       <div class="form-hint" style="margin-bottom:var(--space-md)">基于 LobeChat 的 AI 对话客户端，通过 Gateway 连接模型服务。支持本地和外网访问。</div>
-      <div id="clawapp-content"></div>
+      <div id="clawapp-content"><div class="stat-card loading-placeholder" style="height:64px"></div></div>
     </div>
   `
 

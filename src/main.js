@@ -64,7 +64,7 @@ async function boot() {
         if (running) {
           autoConnectWebSocket()
         } else {
-          wsClient.close()
+          wsClient.disconnect()
         }
       })
     }
@@ -84,6 +84,17 @@ async function autoConnectWebSocket() {
       console.log('[main] 设备配对 + origins 已就绪')
     } catch (pairErr) {
       console.warn('[main] autoPairDevice 失败（非致命）:', pairErr)
+    }
+
+    // 确保模型配置包含 vision 支持（input: ["text", "image"]）
+    try {
+      const patched = await api.patchModelVision()
+      if (patched) {
+        console.log('[main] 已为模型添加 vision 支持，重载 Gateway...')
+        await api.reloadGateway()
+      }
+    } catch (visionErr) {
+      console.warn('[main] patchModelVision 失败（非致命）:', visionErr)
     }
 
     wsClient.connect(`127.0.0.1:${port}`, token)

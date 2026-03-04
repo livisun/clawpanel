@@ -33,6 +33,8 @@ pub fn run() {
             config::upgrade_openclaw,
             config::install_gateway,
             config::uninstall_gateway,
+            config::patch_model_vision,
+            config::check_panel_update,
             config::get_npm_registry,
             config::set_npm_registry,
             // 设备密钥 + Gateway 握手

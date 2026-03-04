@@ -865,6 +865,105 @@ pub fn uninstall_gateway() -> Result<String, String> {
     Ok("Gateway 服务已卸载".to_string())
 }
 
+/// 为 openclaw.json 中所有模型添加 input: ["text", "image"]，使 Gateway 识别模型支持图片输入
+#[tauri::command]
+pub fn patch_model_vision() -> Result<bool, String> {
+    let path = super::openclaw_dir().join("openclaw.json");
+    let content = fs::read_to_string(&path).map_err(|e| format!("读取配置失败: {e}"))?;
+    let mut config: Value =
+        serde_json::from_str(&content).map_err(|e| format!("解析 JSON 失败: {e}"))?;
+
+    let vision_input = Value::Array(vec![
+        Value::String("text".into()),
+        Value::String("image".into()),
+    ]);
+
+    let mut changed = false;
+
+    if let Some(obj) = config.as_object_mut() {
+        if let Some(models_val) = obj.get_mut("models") {
+            if let Some(models_obj) = models_val.as_object_mut() {
+                if let Some(providers_val) = models_obj.get_mut("providers") {
+                    if let Some(providers_obj) = providers_val.as_object_mut() {
+                        for (_provider_name, provider_val) in providers_obj.iter_mut() {
+                            if let Some(provider_obj) = provider_val.as_object_mut() {
+                                if let Some(Value::Array(arr)) = provider_obj.get_mut("models") {
+                                    for model in arr.iter_mut() {
+                                        if let Some(mobj) = model.as_object_mut() {
+                                            if !mobj.contains_key("input") {
+                                                mobj.insert(
+                                                    "input".into(),
+                                                    vision_input.clone(),
+                                                );
+                                                changed = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if changed {
+        let bak = super::openclaw_dir().join("openclaw.json.bak");
+        let _ = fs::copy(&path, &bak);
+        let json =
+            serde_json::to_string_pretty(&config).map_err(|e| format!("序列化失败: {e}"))?;
+        fs::write(&path, json).map_err(|e| format!("写入失败: {e}"))?;
+    }
+
+    Ok(changed)
+}
+
+/// 检查 ClawPanel 自身是否有新版本（通过 GitHub releases API）
+#[tauri::command]
+pub async fn check_panel_update() -> Result<Value, String> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .user_agent("ClawPanel")
+        .build()
+        .map_err(|e| format!("创建 HTTP 客户端失败: {e}"))?;
+
+    let url = "https://api.github.com/repos/qingchencloud/clawpanel/releases/latest";
+    let resp = client
+        .get(url)
+        .send()
+        .await
+        .map_err(|e| format!("请求失败: {e}"))?;
+
+    if !resp.status().is_success() {
+        return Err(format!("GitHub API 返回 {}", resp.status()));
+    }
+
+    let json: Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {e}"))?;
+
+    let tag = json
+        .get("tag_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .trim_start_matches('v')
+        .to_string();
+
+    let mut result = serde_json::Map::new();
+    result.insert("latest".into(), Value::String(tag));
+    result.insert(
+        "url".into(),
+        json.get("html_url")
+            .cloned()
+            .unwrap_or(Value::String(
+                "https://github.com/qingchencloud/clawpanel/releases".into(),
+            )),
+    );
+    Ok(Value::Object(result))
+}
+
 #[tauri::command]
 pub fn get_npm_registry() -> Result<String, String> {
     Ok(get_configured_registry())

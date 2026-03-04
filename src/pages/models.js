@@ -64,7 +64,10 @@ export async function render() {
     <div style="margin-bottom:var(--space-md)">
       <input class="form-input" id="model-search" placeholder="搜索模型（按 ID 或名称过滤）" style="max-width:360px">
     </div>
-    <div id="providers-list"></div>
+    <div id="providers-list">
+      <div class="config-section"><div class="stat-card loading-placeholder" style="height:120px"></div></div>
+      <div class="config-section"><div class="stat-card loading-placeholder" style="height:120px"></div></div>
+    </div>
   `
 
   const state = { config: null, search: '', undoStack: [] }
@@ -349,6 +352,12 @@ async function undo(page, state) {
 // 自动保存（防抖 300ms）
 let _saveTimer = null
 let _batchTestAbort = null // 批量测试终止控制器
+
+export function cleanup() {
+  clearTimeout(_saveTimer)
+  _saveTimer = null
+  if (_batchTestAbort) { _batchTestAbort.abort = true; _batchTestAbort = null }
+}
 function autoSave(state) {
   clearTimeout(_saveTimer)
   _saveTimer = setTimeout(() => doAutoSave(state), 300)
@@ -1074,7 +1083,7 @@ async function fetchRemoteModels(btn, page, state, providerKey) {
       if (!selected.length) { toast('请至少选择一个模型', 'warning'); return }
       pushUndo(state)
       for (const id of selected) {
-        provider.models.push({ id, input: ['text'] })
+        provider.models.push({ id, input: ['text', 'image'] })
       }
       overlay.remove()
       renderProviders(page, state)

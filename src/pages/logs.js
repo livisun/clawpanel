@@ -33,7 +33,7 @@ export async function render() {
         <input type="checkbox" id="log-autoscroll" checked> 自动滚动
       </label>
     </div>
-    <div class="log-viewer" id="log-content" style="height:calc(100vh - 280px)"></div>
+    <div class="log-viewer" id="log-content" style="height:calc(100vh - 280px)"><div class="stat-card loading-placeholder" style="height:16px;margin:8px 0"></div><div class="stat-card loading-placeholder" style="height:16px;margin:8px 0"></div><div class="stat-card loading-placeholder" style="height:16px;margin:8px 0"></div><div class="stat-card loading-placeholder" style="height:16px;margin:8px 0"></div></div>
   `
 
   let currentTab = 'gateway'

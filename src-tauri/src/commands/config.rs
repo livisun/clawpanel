@@ -259,7 +259,7 @@ fn detect_installed_source() -> String {
             }
             return "official".into();
         }
-        return "official".into();
+        "official".into()
     }
     // Windows: 优先通过文件系统检测，避免 npm list 阻塞
     #[cfg(target_os = "windows")]
@@ -274,7 +274,7 @@ fn detect_installed_source() -> String {
                 return "chinese".into();
             }
         }
-        return "official".into();
+        "official".into()
     }
     // 所有平台通用: npm list 检测
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
@@ -339,7 +339,7 @@ pub async fn upgrade_openclaw(app: tauri::AppHandle, source: String) -> Result<S
         // 先检查是否真的安装了旧包，如果没有安装，npm uninstall 会报错但不影响
         let _ = app.emit("upgrade-log", format!("清理遗留环境 ({old_pkg})..."));
         let _ = app.emit("upgrade-progress", 5);
-        let _ = npm_command().args(["uninstall", "-g", &old_pkg]).output();
+        let _ = npm_command().args(["uninstall", "-g", old_pkg]).output();
     }
 
     let _ = app.emit("upgrade-log", format!("$ npm install -g {pkg}"));

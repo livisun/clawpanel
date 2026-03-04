@@ -121,12 +121,10 @@ pub async fn read_memory_file(path: String, agent_id: Option<String>) -> Result<
         memory_dir_for_agent(aid, "core").await,
     ];
 
-    for c in &candidates {
-        if let Ok(dir) = c {
-            let full = dir.join(&path);
-            if full.exists() {
-                return fs::read_to_string(&full).map_err(|e| format!("读取失败: {e}"));
-            }
+    for dir in candidates.iter().flatten() {
+        let full = dir.join(&path);
+        if full.exists() {
+            return fs::read_to_string(&full).map_err(|e| format!("读取失败: {e}"));
         }
     }
 
@@ -168,12 +166,10 @@ pub async fn delete_memory_file(path: String, agent_id: Option<String>) -> Resul
         memory_dir_for_agent(aid, "core").await,
     ];
 
-    for c in &candidates {
-        if let Ok(dir) = c {
-            let full = dir.join(&path);
-            if full.exists() {
-                return fs::remove_file(&full).map_err(|e| format!("删除失败: {e}"));
-            }
+    for dir in candidates.iter().flatten() {
+        let full = dir.join(&path);
+        if full.exists() {
+            return fs::remove_file(&full).map_err(|e| format!("删除失败: {e}"));
         }
     }
 

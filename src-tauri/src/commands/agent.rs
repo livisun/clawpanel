@@ -114,7 +114,7 @@ pub fn update_agent_identity(
         .ok_or(format!("Agent「{id}」不存在"))?;
 
     // 确保 identity 字段存在且为对象
-    if !agent.get("identity").and_then(|i| i.as_object()).is_some() {
+    if agent.get("identity").and_then(|i| i.as_object()).is_none() {
         agent
             .as_object_mut()
             .ok_or("Agent 格式错误")?

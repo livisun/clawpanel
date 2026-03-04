@@ -87,11 +87,7 @@ pub fn search_log(
 
     // 搜索最多读取尾部 2MB，避免 OOM，同时保证搜索最新内容
     let max_read: u64 = 2 * 1024 * 1024;
-    let start_pos = if file_len > max_read {
-        file_len - max_read
-    } else {
-        0
-    };
+    let start_pos = file_len.saturating_sub(max_read);
 
     file.seek(SeekFrom::Start(start_pos))
         .map_err(|e| format!("Seek 失败: {e}"))?;
@@ -101,7 +97,7 @@ pub fn search_log(
 
     let mut matched: Vec<String> = reader
         .lines()
-        .filter_map(|l| l.ok())
+        .map_while(Result::ok)
         .filter(|l| l.to_lowercase().contains(&query_lower))
         .collect();
 

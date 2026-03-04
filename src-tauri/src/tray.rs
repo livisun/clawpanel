@@ -60,13 +60,19 @@ fn handle_menu_event(app: &AppHandle, id: &str) {
             }
         }
         "gateway_start" => {
-            let _ = crate::commands::service::start_service("ai.openclaw.gateway".into());
+            std::mem::drop(crate::commands::service::start_service(
+                "ai.openclaw.gateway".into(),
+            ));
         }
         "gateway_stop" => {
-            let _ = crate::commands::service::stop_service("ai.openclaw.gateway".into());
+            std::mem::drop(crate::commands::service::stop_service(
+                "ai.openclaw.gateway".into(),
+            ));
         }
         "gateway_restart" => {
-            let _ = crate::commands::service::restart_service("ai.openclaw.gateway".into());
+            std::mem::drop(crate::commands::service::restart_service(
+                "ai.openclaw.gateway".into(),
+            ));
         }
         "quit" => {
             app.exit(0);

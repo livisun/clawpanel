@@ -248,6 +248,15 @@
     .t-comment { color: var(--text-t); }
     .t-cmd { color: var(--text-s); } .t-cmd::before { content: '$ '; color: var(--accent); }
 
+    /* ══════════════ Deploy Guides ══════════════ */
+    .deploy-grid { display: flex; flex-direction: column; gap: 24px; }
+    .deploy-card { border-radius: 16px; border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: blur(8px); padding: 28px; transition: all 0.3s; }
+    .deploy-card:hover { border-color: var(--border-h); }
+    .deploy-card-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 20px; }
+    .deploy-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .deploy-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .deploy-desc { font-size: 14px; color: var(--text-s); }
+
     /* ══════════════ Ecosystem ══════════════ */
     .eco-list { display: flex; flex-direction: column; gap: 16px; }
     .eco-card { display: flex; align-items: center; justify-content: space-between; border-radius: 16px; border: 1px solid var(--border); background: var(--bg-card); backdrop-filter: blur(8px); padding: 24px; transition: all 0.3s; }
@@ -390,6 +399,7 @@
         <a href="#features" class="nav-link">功能预览</a>
         <a href="#tech" class="nav-link">架构</a>
         <a href="#quickstart" class="nav-link">开始</a>
+        <a href="#deploy" class="nav-link">部署</a>
         <a href="#community" class="nav-link">社区</a>
         <a href="#download" class="nav-link">下载</a>
         <a href="https://github.com/qingchencloud/clawpanel" target="_blank" rel="noopener" class="nav-link">GitHub</a>
@@ -413,6 +423,7 @@
         <a href="#features" class="mobile-menu-link mobile-link">功能预览</a>
         <a href="#tech" class="mobile-menu-link mobile-link">架构</a>
         <a href="#quickstart" class="mobile-menu-link mobile-link">开始</a>
+        <a href="#deploy" class="mobile-menu-link mobile-link">部署</a>
         <a href="#community" class="mobile-menu-link mobile-link">社区</a>
         <a href="https://github.com/qingchencloud/clawpanel" target="_blank" rel="noopener" class="mobile-menu-link">GitHub ↗</a>
       </div>
@@ -662,6 +673,85 @@
           <div class="t-comment"># 仅前端调试（浏览器 mock 模式）</div>
           <div class="t-cmd">npm run dev</div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ Deploy Guides ══════════════ -->
+  <section id="deploy" class="section">
+    <div class="grid-bg"></div>
+    <div class="container-sm" style="position:relative;z-index:10">
+      <div class="section-header">
+        <h2 class="reveal section-title">服务器 <span class="gradient-text">部署指南</span></h2>
+        <p class="reveal section-desc">不用桌面环境，在 Linux 服务器或 Docker 上一键部署 OpenClaw Gateway</p>
+      </div>
+      <div class="deploy-grid">
+        <!-- Linux -->
+        <div class="reveal deploy-card">
+          <div class="deploy-card-header">
+            <div class="deploy-icon" style="background:rgba(234,179,8,0.1)">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/><path d="m6 8 4 4-4 4"/><path d="M12 16h4"/></svg>
+            </div>
+            <div>
+              <h3 class="deploy-title">Linux 一键部署</h3>
+              <p class="deploy-desc">支持 Ubuntu、Debian、CentOS、Fedora、Alpine 等主流发行版</p>
+            </div>
+          </div>
+          <div class="terminal" style="margin:0">
+            <div class="terminal-bar">
+              <span class="td td-r"></span><span class="td td-y"></span><span class="td td-g"></span>
+              <span class="terminal-title mono">bash</span>
+            </div>
+            <div class="terminal-body mono" style="padding:16px 20px;font-size:13px">
+              <div class="t-comment"># 一键安装 Node.js + OpenClaw + systemd 自启</div>
+              <div class="t-cmd">curl -fsSL https://raw.githubusercontent.com/qingchencloud/clawpanel/main/scripts/linux-deploy.sh | bash</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">
+            <a href="https://github.com/qingchencloud/clawpanel/blob/main/docs/linux-deploy.md" target="_blank" rel="noopener" class="btn btn-sm btn-outline" style="font-size:13px;padding:6px 16px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+              完整教程
+            </a>
+            <span style="color:var(--text-muted);font-size:12px;line-height:32px">Node.js 安装 · 配置模型 · systemd/PM2 · Nginx 反代 · 防火墙</span>
+          </div>
+        </div>
+        <!-- Docker -->
+        <div class="reveal deploy-card">
+          <div class="deploy-card-header">
+            <div class="deploy-icon" style="background:rgba(34,211,238,0.1)">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12.5c-.5-1-2-2-4-2-1 0-2 .5-2.5 1"/><rect x="1" y="8" width="4" height="4" rx=".5"/><rect x="6" y="8" width="4" height="4" rx=".5"/><rect x="11" y="8" width="4" height="4" rx=".5"/><rect x="6" y="3" width="4" height="4" rx=".5"/><rect x="11" y="3" width="4" height="4" rx=".5"/><rect x="16" y="8" width="4" height="4" rx=".5"/><path d="M2 16c0 2 2 4 10 4s10-2 10-4"/></svg>
+            </div>
+            <div>
+              <h3 class="deploy-title">Docker 部署</h3>
+              <p class="deploy-desc">容器化隔离，支持 Compose 编排、Nginx 反代、Ollama 联动</p>
+            </div>
+          </div>
+          <div class="terminal" style="margin:0">
+            <div class="terminal-bar">
+              <span class="td td-r"></span><span class="td td-y"></span><span class="td td-g"></span>
+              <span class="terminal-title mono">bash</span>
+            </div>
+            <div class="terminal-body mono" style="padding:16px 20px;font-size:13px">
+              <div class="t-comment"># 一条命令启动 Gateway</div>
+              <div class="t-cmd">docker run -d --name openclaw --restart unless-stopped \</div>
+              <div class="t-cmd" style="padding-left:1em">-p 18789:18789 -v openclaw-data:/root/.openclaw \</div>
+              <div class="t-cmd" style="padding-left:1em">node:22-slim sh -c "npm i -g @qingchencloud/openclaw-zh && openclaw gateway start"</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">
+            <a href="https://github.com/qingchencloud/clawpanel/blob/main/docs/docker-deploy.md" target="_blank" rel="noopener" class="btn btn-sm btn-outline" style="font-size:13px;padding:6px 16px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+              完整教程
+            </a>
+            <span style="color:var(--text-muted);font-size:12px;line-height:32px">Compose · Dockerfile · 模型配置 · Ollama · 多实例</span>
+          </div>
+        </div>
+      </div>
+      <div class="reveal" style="text-align:center;margin-top:32px">
+        <p style="color:var(--text-muted);font-size:14px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-2px;opacity:0.7"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          部署完成后，访问 <code style="background:var(--surface);padding:2px 8px;border-radius:4px;font-size:13px">http://服务器IP:18789</code> 即可使用。支持任何兼容 OpenAI API 的客户端连接。
+        </p>
       </div>
     </div>
   </section>

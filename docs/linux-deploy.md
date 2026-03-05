@@ -325,6 +325,8 @@ docker run -d \
   sh -c "npm install -g @qingchencloud/openclaw-zh --registry https://registry.npmmirror.com && openclaw gateway start"
 ```
 
+> 📖 Docker 完整教程（Compose、自定义镜像、Nginx 反向代理、Ollama 联动等）见 [Docker 部署指南](docker-deploy.md)
+
 ---
 
 ## 远程管理

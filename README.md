@@ -85,6 +85,17 @@ curl -fsSL https://raw.githubusercontent.com/qingchencloud/clawpanel/main/script
 
 📖 详细教程见 [Linux 服务器部署指南](docs/linux-deploy.md)
 
+### Docker 部署
+
+```bash
+docker run -d --name openclaw --restart unless-stopped \
+  -p 18789:18789 -v openclaw-data:/root/.openclaw \
+  node:22-slim \
+  sh -c "npm install -g @qingchencloud/openclaw-zh --registry https://registry.npmmirror.com && openclaw gateway start"
+```
+
+📖 详细教程见 [Docker 部署指南](docs/docker-deploy.md)（含 Compose、Dockerfile、Nginx 反向代理、Ollama 联动等）
+
 ## 功能特性
 
 <p align="center">

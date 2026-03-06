@@ -318,16 +318,37 @@ const handlers = {
   },
 
   reload_gateway() {
-    if (!isMac) throw new Error('非 macOS 请使用 Tauri 桌面应用')
-    // Gateway 不支持 SIGHUP 热重载，改为完整重启
-    macRestartService('ai.openclaw.gateway')
-    return 'Gateway 已重启'
+    if (isMac) {
+      macRestartService('ai.openclaw.gateway')
+      return 'Gateway 已重启'
+    } else if (isWindows) {
+      throw new Error('Windows 请使用 Tauri 桌面应用')
+    } else {
+      // Linux
+      try {
+        execSync('systemctl restart clawpanel', { stdio: 'inherit' })
+        return 'Gateway 已重启'
+      } catch (err) {
+        throw new Error(`重启失败: ${err.message}`)
+      }
+    }
   },
 
   restart_gateway() {
-    if (!isMac) throw new Error('非 macOS 请使用 Tauri 桌面应用')
-    macRestartService('ai.openclaw.gateway')
-    return 'Gateway 已重启'
+    if (isMac) {
+      macRestartService('ai.openclaw.gateway')
+      return 'Gateway 已重启'
+    } else if (isWindows) {
+      throw new Error('Windows 请使用 Tauri 桌面应用')
+    } else {
+      // Linux
+      try {
+        execSync('systemctl restart clawpanel', { stdio: 'inherit' })
+        return 'Gateway 已重启'
+      } catch (err) {
+        throw new Error(`重启失败: ${err.message}`)
+      }
+    }
   },
 
   // 安装检测

@@ -10,6 +10,23 @@ use std::process::Command;
 
 use crate::models::types::VersionInfo;
 
+struct GuardianPause {
+    reason: &'static str,
+}
+
+impl GuardianPause {
+    fn new(reason: &'static str) -> Self {
+        crate::commands::service::guardian_pause(reason);
+        Self { reason }
+    }
+}
+
+impl Drop for GuardianPause {
+    fn drop(&mut self) {
+        crate::commands::service::guardian_resume(self.reason);
+    }
+}
+
 /// 预设 npm 源列表
 const DEFAULT_REGISTRY: &str = "https://registry.npmmirror.com";
 
@@ -548,6 +565,7 @@ pub async fn upgrade_openclaw(
     use std::io::{BufRead, BufReader};
     use std::process::Stdio;
     use tauri::Emitter;
+    let _guardian_pause = GuardianPause::new("upgrade");
 
     let current_source = detect_installed_source();
     let pkg_name = npm_package_name(&source);
@@ -715,6 +733,8 @@ pub async fn uninstall_openclaw(
     use std::io::{BufRead, BufReader};
     use std::process::Stdio;
     use tauri::Emitter;
+    let _guardian_pause = GuardianPause::new("uninstall openclaw");
+    crate::commands::service::guardian_mark_manual_stop();
 
     let source = detect_installed_source();
     let pkg = npm_package_name(&source);
@@ -1362,6 +1382,7 @@ pub async fn list_remote_models(base_url: String, api_key: String) -> Result<Vec
 #[tauri::command]
 pub async fn install_gateway() -> Result<String, String> {
     use crate::utils::openclaw_command_async;
+    let _guardian_pause = GuardianPause::new("install gateway");
     // 先检测 openclaw CLI 是否可用
     let cli_check = openclaw_command_async().arg("--version").output().await;
     match cli_check {
@@ -1394,6 +1415,8 @@ pub async fn install_gateway() -> Result<String, String> {
 /// Linux: pkill
 #[tauri::command]
 pub fn uninstall_gateway() -> Result<String, String> {
+    let _guardian_pause = GuardianPause::new("uninstall gateway");
+    crate::commands::service::guardian_mark_manual_stop();
     #[cfg(target_os = "macos")]
     {
         let uid = get_uid()?;
@@ -1425,7 +1448,6 @@ pub fn uninstall_gateway() -> Result<String, String> {
             .args(["-f", "openclaw.*gateway"])
             .output();
     }
-
     Ok("Gateway 服务已卸载".to_string())
 }
 

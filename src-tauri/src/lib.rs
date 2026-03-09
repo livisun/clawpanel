@@ -55,6 +55,7 @@ pub fn run() {
             }
         })
         .setup(|app| {
+            service::start_backend_guardian(app.handle().clone());
             tray::setup_tray(app.handle())?;
             Ok(())
         })
@@ -101,6 +102,7 @@ pub fn run() {
             service::start_service,
             service::stop_service,
             service::restart_service,
+            service::guardian_status,
             // 日志
             logs::read_log_tail,
             logs::search_log,

@@ -1111,6 +1111,165 @@ const handlers = {
     }
   },
 
+  // === 消息渠道管理 ===
+
+  list_configured_platforms() {
+    if (!fs.existsSync(CONFIG_PATH)) return []
+    const cfg = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'))
+    const channels = cfg.channels || {}
+    return Object.entries(channels).map(([id, val]) => ({
+      id,
+      enabled: val?.enabled !== false,
+    }))
+  },
+
+  read_platform_config({ platform }) {
+    if (!fs.existsSync(CONFIG_PATH)) return { exists: false }
+    const cfg = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'))
+    const saved = cfg.channels?.[platform]
+    if (!saved) return { exists: false }
+    const form = {}
+    if (platform === 'qqbot') {
+      const t = saved.token || ''
+      const [appId, ...rest] = t.split(':')
+      if (appId) form.appId = appId
+      if (rest.length) form.appSecret = rest.join(':')
+    } else if (platform === 'telegram') {
+      if (saved.botToken) form.botToken = saved.botToken
+      if (saved.allowFrom) form.allowedUsers = saved.allowFrom.join(', ')
+    } else if (platform === 'discord') {
+      if (saved.token) form.token = saved.token
+      const gid = saved.guilds && Object.keys(saved.guilds)[0]
+      if (gid) form.guildId = gid
+    } else if (platform === 'feishu') {
+      if (saved.appId) form.appId = saved.appId
+      if (saved.appSecret) form.appSecret = saved.appSecret
+      if (saved.domain) form.domain = saved.domain
+    } else {
+      for (const [k, v] of Object.entries(saved)) {
+        if (k !== 'enabled' && typeof v === 'string') form[k] = v
+      }
+    }
+    return { exists: true, values: form }
+  },
+
+  save_messaging_platform({ platform, form }) {
+    if (!fs.existsSync(CONFIG_PATH)) throw new Error('openclaw.json 不存在')
+    const cfg = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'))
+    if (!cfg.channels) cfg.channels = {}
+    const entry = { enabled: true }
+    if (platform === 'qqbot') {
+      entry.token = `${form.appId}:${form.appSecret}`
+    } else if (platform === 'telegram') {
+      entry.botToken = form.botToken
+      if (form.allowedUsers) entry.allowFrom = form.allowedUsers.split(',').map(s => s.trim()).filter(Boolean)
+    } else if (platform === 'discord') {
+      entry.token = form.token
+      entry.groupPolicy = 'allowlist'
+      if (form.guildId) {
+        const ck = form.channelId || '*'
+        entry.guilds = { [form.guildId]: { users: ['*'], requireMention: true, channels: { [ck]: { allow: true, requireMention: true } } } }
+      }
+    } else if (platform === 'feishu') {
+      entry.appId = form.appId
+      entry.appSecret = form.appSecret
+      entry.connectionMode = 'websocket'
+      if (form.domain) entry.domain = form.domain
+    } else {
+      Object.assign(entry, form)
+    }
+    cfg.channels[platform] = entry
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2))
+    return { ok: true }
+  },
+
+  remove_messaging_platform({ platform }) {
+    if (!fs.existsSync(CONFIG_PATH)) throw new Error('openclaw.json 不存在')
+    const cfg = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'))
+    if (cfg.channels) delete cfg.channels[platform]
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2))
+    return { ok: true }
+  },
+
+  toggle_messaging_platform({ platform, enabled }) {
+    if (!fs.existsSync(CONFIG_PATH)) throw new Error('openclaw.json 不存在')
+    const cfg = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'))
+    if (!cfg.channels?.[platform]) throw new Error(`平台 ${platform} 未配置`)
+    cfg.channels[platform].enabled = enabled
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2))
+    return { ok: true }
+  },
+
+  async verify_bot_token({ platform, form }) {
+    if (platform === 'feishu') {
+      const domain = (form.domain || '').trim()
+      const base = domain === 'lark' ? 'https://open.larksuite.com' : 'https://open.feishu.cn'
+      try {
+        const resp = await fetch(`${base}/open-apis/auth/v3/tenant_access_token/internal`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ app_id: form.appId, app_secret: form.appSecret }),
+          signal: AbortSignal.timeout(15000),
+        })
+        const body = await resp.json()
+        if (body.code === 0) return { valid: true, errors: [], details: [`App ID: ${form.appId}`] }
+        return { valid: false, errors: [body.msg || '凭证无效'] }
+      } catch (e) {
+        return { valid: false, errors: [`飞书 API 连接失败: ${e.message}`] }
+      }
+    }
+    if (platform === 'qqbot') {
+      try {
+        const resp = await fetch('https://bots.qq.com/app/getAppAccessToken', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ appId: form.appId, clientSecret: form.appSecret }),
+          signal: AbortSignal.timeout(15000),
+        })
+        const body = await resp.json()
+        if (body.access_token) return { valid: true, errors: [], details: [`AppID: ${form.appId}`] }
+        return { valid: false, errors: [body.message || body.msg || '凭证无效'] }
+      } catch (e) {
+        return { valid: false, errors: [`QQ Bot API 连接失败: ${e.message}`] }
+      }
+    }
+    if (platform === 'telegram') {
+      try {
+        const resp = await fetch(`https://api.telegram.org/bot${form.botToken}/getMe`, { signal: AbortSignal.timeout(15000) })
+        const body = await resp.json()
+        if (body.ok) return { valid: true, errors: [], details: [`Bot: @${body.result?.username}`] }
+        return { valid: false, errors: [body.description || 'Token 无效'] }
+      } catch (e) {
+        return { valid: false, errors: [`Telegram API 连接失败: ${e.message}`] }
+      }
+    }
+    if (platform === 'discord') {
+      try {
+        const resp = await fetch('https://discord.com/api/v10/users/@me', {
+          headers: { Authorization: `Bot ${form.token}` },
+          signal: AbortSignal.timeout(15000),
+        })
+        if (resp.status === 401) return { valid: false, errors: ['Bot Token 无效'] }
+        const body = await resp.json()
+        if (body.bot) return { valid: true, errors: [], details: [`Bot: @${body.username}`] }
+        return { valid: false, errors: ['提供的 Token 不属于 Bot 账号'] }
+      } catch (e) {
+        return { valid: false, errors: [`Discord API 连接失败: ${e.message}`] }
+      }
+    }
+    return { valid: true, warnings: ['该平台暂不支持在线校验'] }
+  },
+
+  install_qqbot_plugin() {
+    const bin = findOpenclawBin() || 'openclaw'
+    try {
+      execSync(`${bin} plugins install @sliverp/qqbot@latest`, { timeout: 60000, cwd: homedir() })
+      return '安装成功'
+    } catch (e) {
+      throw new Error('QQBot 插件安装失败: ' + (e.message || e))
+    }
+  },
+
   // === 实例管理 ===
 
   instance_list() {

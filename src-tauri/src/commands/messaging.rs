@@ -62,6 +62,18 @@ pub async fn read_platform_config(platform: String) -> Result<Value, String> {
                 }
             }
         }
+        "feishu" => {
+            // 飞书: appId, appSecret, domain 直接保存
+            if let Some(v) = saved.get("appId").and_then(|v| v.as_str()) {
+                form.insert("appId".into(), Value::String(v.into()));
+            }
+            if let Some(v) = saved.get("appSecret").and_then(|v| v.as_str()) {
+                form.insert("appSecret".into(), Value::String(v.into()));
+            }
+            if let Some(v) = saved.get("domain").and_then(|v| v.as_str()) {
+                form.insert("domain".into(), Value::String(v.into()));
+            }
+        }
         _ => {
             // 通用：原样返回字符串类型字段
             if let Some(obj) = saved.as_object() {
@@ -203,6 +215,46 @@ pub async fn save_messaging_platform(
 
             channels_map.insert("qqbot".into(), Value::Object(entry));
         }
+        "feishu" => {
+            let app_id = form_obj
+                .get("appId")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .trim()
+                .to_string();
+            let app_secret = form_obj
+                .get("appSecret")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .trim()
+                .to_string();
+
+            if app_id.is_empty() || app_secret.is_empty() {
+                return Err("App ID 和 App Secret 不能为空".into());
+            }
+
+            let mut entry = Map::new();
+            entry.insert("appId".into(), Value::String(app_id));
+            entry.insert("appSecret".into(), Value::String(app_secret));
+            entry.insert("enabled".into(), Value::Bool(true));
+            entry.insert(
+                "connectionMode".into(),
+                Value::String("websocket".into()),
+            );
+
+            // 域名（默认 feishu，国际版选 lark）
+            let domain = form_obj
+                .get("domain")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .trim()
+                .to_string();
+            if !domain.is_empty() {
+                entry.insert("domain".into(), Value::String(domain));
+            }
+
+            channels_map.insert("feishu".into(), Value::Object(entry));
+        }
         _ => {
             // 通用平台：直接保存表单字段
             let mut entry = Map::new();
@@ -282,6 +334,7 @@ pub async fn verify_bot_token(
         "discord" => verify_discord(&client, form_obj).await,
         "telegram" => verify_telegram(&client, form_obj).await,
         "qqbot" => verify_qqbot(&client, form_obj).await,
+        "feishu" => verify_feishu(&client, form_obj).await,
         _ => Ok(json!({
             "valid": true,
             "warnings": ["该平台暂不支持在线校验"]
@@ -565,6 +618,79 @@ async fn verify_telegram(
         Ok(json!({
             "valid": false,
             "errors": [desc]
+        }))
+    }
+}
+
+// ── 飞书凭证校验 ──────────────────────────────────────
+
+async fn verify_feishu(
+    client: &reqwest::Client,
+    form: &Map<String, Value>,
+) -> Result<Value, String> {
+    let app_id = form
+        .get("appId")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .trim();
+    let app_secret = form
+        .get("appSecret")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .trim();
+
+    if app_id.is_empty() {
+        return Ok(json!({ "valid": false, "errors": ["App ID 不能为空"] }));
+    }
+    if app_secret.is_empty() {
+        return Ok(json!({ "valid": false, "errors": ["App Secret 不能为空"] }));
+    }
+
+    // 通过飞书 API 获取 tenant_access_token 验证凭证
+    let domain = form
+        .get("domain")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .trim();
+    let base_url = if domain == "lark" {
+        "https://open.larksuite.com"
+    } else {
+        "https://open.feishu.cn"
+    };
+
+    let resp = client
+        .post(format!(
+            "{}/open-apis/auth/v3/tenant_access_token/internal",
+            base_url
+        ))
+        .json(&json!({
+            "app_id": app_id,
+            "app_secret": app_secret
+        }))
+        .send()
+        .await
+        .map_err(|e| format!("飞书 API 连接失败: {}", e))?;
+
+    let body: Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
+
+    let code = body.get("code").and_then(|v| v.as_i64()).unwrap_or(-1);
+    if code == 0 {
+        Ok(json!({
+            "valid": true,
+            "errors": [],
+            "details": [format!("App ID: {}", app_id)]
+        }))
+    } else {
+        let msg = body
+            .get("msg")
+            .and_then(|v| v.as_str())
+            .unwrap_or("凭证无效，请检查 App ID 和 App Secret");
+        Ok(json!({
+            "valid": false,
+            "errors": [msg]
         }))
     }
 }

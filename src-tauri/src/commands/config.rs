@@ -691,6 +691,17 @@ pub async fn upgrade_openclaw(
             "GIT_SSH_COMMAND",
             "ssh -o BatchMode=yes -o StrictHostKeyChecking=no",
         )
+        // Force HTTPS insteadOf via env vars — ensures npm-spawned git subprocesses also use HTTPS
+        // even if global git config didn't take effect (e.g. git not in PATH, or Windows permission issues)
+        .env("GIT_CONFIG_COUNT", "4")
+        .env("GIT_CONFIG_KEY_0", "url.https://github.com/.insteadOf")
+        .env("GIT_CONFIG_VALUE_0", "ssh://git@github.com/")
+        .env("GIT_CONFIG_KEY_1", "url.https://github.com/.insteadOf")
+        .env("GIT_CONFIG_VALUE_1", "git@github.com:")
+        .env("GIT_CONFIG_KEY_2", "url.https://github.com/.insteadOf")
+        .env("GIT_CONFIG_VALUE_2", "git://github.com/")
+        .env("GIT_CONFIG_KEY_3", "url.https://github.com/.insteadOf")
+        .env("GIT_CONFIG_VALUE_3", "git+ssh://git@github.com/")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
@@ -750,6 +761,15 @@ pub async fn upgrade_openclaw(
                     "GIT_SSH_COMMAND",
                     "ssh -o BatchMode=yes -o StrictHostKeyChecking=no",
                 )
+                .env("GIT_CONFIG_COUNT", "4")
+                .env("GIT_CONFIG_KEY_0", "url.https://github.com/.insteadOf")
+                .env("GIT_CONFIG_VALUE_0", "ssh://git@github.com/")
+                .env("GIT_CONFIG_KEY_1", "url.https://github.com/.insteadOf")
+                .env("GIT_CONFIG_VALUE_1", "git@github.com:")
+                .env("GIT_CONFIG_KEY_2", "url.https://github.com/.insteadOf")
+                .env("GIT_CONFIG_VALUE_2", "git://github.com/")
+                .env("GIT_CONFIG_KEY_3", "url.https://github.com/.insteadOf")
+                .env("GIT_CONFIG_VALUE_3", "git+ssh://git@github.com/")
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .spawn()

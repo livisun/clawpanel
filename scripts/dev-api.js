@@ -2704,8 +2704,21 @@ const handlers = {
     const pkg = source === 'official' ? 'openclaw' : '@qingchencloud/openclaw-zh'
     const ver = version || 'latest'
     const npmBin = isWindows ? 'npm.cmd' : 'npm'
+    // Configure Git HTTPS before npm install to prevent SSH auth failures
+    try { execSync('git config --global --unset-all url.https://github.com/.insteadOf 2>&1', { windowsHide: true }) } catch {}
+    for (const from of ['ssh://git@github.com/', 'git@github.com:', 'git://github.com/', 'git+ssh://git@github.com/']) {
+      try { execSync(`git config --global --add url.https://github.com/.insteadOf "${from}"`, { windowsHide: true }) } catch {}
+    }
+    const gitEnv = {
+      GIT_TERMINAL_PROMPT: '0',
+      GIT_CONFIG_COUNT: '4',
+      GIT_CONFIG_KEY_0: 'url.https://github.com/.insteadOf', GIT_CONFIG_VALUE_0: 'ssh://git@github.com/',
+      GIT_CONFIG_KEY_1: 'url.https://github.com/.insteadOf', GIT_CONFIG_VALUE_1: 'git@github.com:',
+      GIT_CONFIG_KEY_2: 'url.https://github.com/.insteadOf', GIT_CONFIG_VALUE_2: 'git://github.com/',
+      GIT_CONFIG_KEY_3: 'url.https://github.com/.insteadOf', GIT_CONFIG_VALUE_3: 'git+ssh://git@github.com/',
+    }
     try {
-      const out = execSync(`${npmBin} install ${pkg}@${ver} --prefix "${OPENCLAW_DIR}" 2>&1`, { timeout: 120000, windowsHide: true }).toString()
+      const out = execSync(`${npmBin} install -g ${pkg}@${ver} --registry https://registry.npmmirror.com 2>&1`, { timeout: 120000, windowsHide: true, env: { ...process.env, ...gitEnv } }).toString()
       const action = ver === 'latest' ? '升级' : '安装'
       return `${action}完成 (${pkg}@${ver})\n${out.slice(-200)}`
     } catch (e) {

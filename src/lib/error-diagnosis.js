@@ -14,28 +14,28 @@ export function diagnoseInstallError(errStr) {
 
   // ===== 1. Git 相关 =====
 
-  // git SSH 权限问题（有 git 但没配 SSH Key）
-  if (s.includes('permission denied (publickey)') || s.includes('ssh://git@github') || s.includes('git@github.com')) {
+  // git SSH 权限问题（有 git 但没配 SSH Key）— 只匹配明确的 SSH 失败信号
+  if (s.includes('permission denied (publickey)') || s.includes('host key verification failed')) {
     return {
-      title: '安装失败 — Git SSH 权限',
-      hint: '依赖包用了 SSH 协议拉取代码，但你没配 GitHub SSH Key。运行以下命令改用 HTTPS：',
-      command: 'git config --global url."https://github.com/".insteadOf ssh://git@github.com/ && git config --global --add url."https://github.com/".insteadOf git@github.com: && git config --global --add url."https://github.com/".insteadOf git://github.com/',
+      title: '安装失败 — Git SSH 认证被拒绝',
+      hint: 'GitHub SSH 认证失败。ClawPanel 已尝试自动配置 HTTPS 替代，但可能未生效。请在终端手动执行：',
+      command: 'git config --global url."https://github.com/".insteadOf ssh://git@github.com/ && git config --global --add url."https://github.com/".insteadOf git@github.com: && git config --global --add url."https://github.com/".insteadOf git://github.com/ && git config --global --add url."https://github.com/".insteadOf git+ssh://git@github.com/',
     }
   }
 
   // git exit 128：优先判断是 SSH 失败还是 Git 未安装
   if (s.includes('code 128') || s.includes('exit 128')) {
-    if (s.includes('ssh') || s.includes('git@') || s.includes('publickey') || s.includes('access rights')) {
+    if (s.includes('permission denied') || s.includes('publickey') || s.includes('host key verification')) {
       return {
-        title: '安装失败 — Git SSH 权限',
-        hint: '依赖包用了 SSH 协议拉取代码，但你没配 GitHub SSH Key。运行以下命令改用 HTTPS：',
-        command: 'git config --global url."https://github.com/".insteadOf ssh://git@github.com/ && git config --global --add url."https://github.com/".insteadOf git@github.com: && git config --global --add url."https://github.com/".insteadOf git://github.com/',
+        title: '安装失败 — Git SSH 认证被拒绝',
+        hint: 'GitHub SSH 认证失败。ClawPanel 已尝试自动配置 HTTPS 替代，但可能未生效。请在终端手动执行后重试：',
+        command: 'git config --global url."https://github.com/".insteadOf ssh://git@github.com/ && git config --global --add url."https://github.com/".insteadOf git@github.com: && git config --global --add url."https://github.com/".insteadOf git://github.com/ && git config --global --add url."https://github.com/".insteadOf git+ssh://git@github.com/',
       }
     }
     return {
-      title: '安装失败 — Git 错误',
-      hint: 'Git 操作返回错误（exit 128）。可能是 Git 未安装，或 SSH 认证失败。请确认 Git 已安装，或手动执行以下命令切换到 HTTPS 模式：',
-      command: 'git config --global url."https://github.com/".insteadOf ssh://git@github.com/ && git config --global --add url."https://github.com/".insteadOf git@github.com:',
+      title: '安装失败 — Git 拉取依赖错误',
+      hint: 'Git 操作失败（exit 128）。可能是网络问题或 SSH 认证失败。请先确认网络正常，然后在终端手动执行以下命令后重试：',
+      command: 'git config --global url."https://github.com/".insteadOf ssh://git@github.com/ && git config --global --add url."https://github.com/".insteadOf git@github.com: && git config --global --add url."https://github.com/".insteadOf git+ssh://git@github.com/',
     }
   }
 

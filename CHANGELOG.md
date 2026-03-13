@@ -5,6 +5,20 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.8.6] - 2026-03-13
+
+### 修复 (Fixes)
+
+- **切换汉化版 SSH 认证失败** — npm install 子进程现通过 `GIT_CONFIG_COUNT` 环境变量强制注入 HTTPS insteadOf 规则，确保即使全局 git config 未生效（Windows PATH 问题等），SSH→HTTPS 替换也能在 npm 子进程中工作
+- **#58 定时任务触发错误** — 修复 `fetchJobs` 中 `id: j.name || j.id` 导致自定义名称的任务无法触发（感谢 @axdlee）
+- **#63 systemd 部署找不到 OpenClaw** — 文档改用 `$(which node)` 动态路径 + `Environment=PATH` 确保 systemd 服务能找到 Node.js 和 OpenClaw CLI
+- **CI rustfmt/clippy 跨平台警告** — 修复 `unused_imports`（BufRead/BufReader 移入 cfg block）、`needless_return`×3、`and_then→map`
+
+### 改进 (Improvements)
+
+- **错误诊断更精准** — SSH 错误诊断改用更严格的匹配（`permission denied`、`publickey`、`host key verification`），不再被 npm verbose 日志中的 `git@` 字样误触发
+- **README 文档增强** — 新增「快速上手」4 步指南、Web 版部署指南（含 Nginx 配置示例）、消息渠道配置指南、FAQ 扩充 6 个常见问题
+
 ## [0.8.5] - 2026-03-13
 
 ### 修复 (Fixes)

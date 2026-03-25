@@ -642,6 +642,10 @@ async function checkGlobalUpdate() {
     const dismissed = localStorage.getItem('clawpanel_update_dismissed')
     if (dismissed === ver) return
 
+    // 热更新已下载并重载过，不再重复提示同一版本
+    const hotApplied = localStorage.getItem('clawpanel_hot_update_applied')
+    if (hotApplied === ver) return
+
     const changelog = info.manifest?.changelog || ''
     const isWeb = !window.__TAURI_INTERNALS__
 
@@ -707,6 +711,7 @@ sudo systemctl restart clawpanel</pre>
       btn.textContent = '下载中...'
       try {
         await api.downloadFrontendUpdate(info.manifest?.url || '', info.manifest?.hash || '')
+        localStorage.setItem('clawpanel_hot_update_applied', ver)
         btn.textContent = '重载应用'
         btn.disabled = false
         btn.onclick = () => window.location.reload()

@@ -1325,7 +1325,15 @@ async function openConfigDialog(pid, page, state, accountId) {
           if (!s) { statusEl.textContent = t('channels.pluginStatusFailed'); return }
           const parts = []
           const installBtn = modal.querySelector('[data-channel-action="install"]')
-          if (s.installed) {
+          if (s.installed && s.compatible === false) {
+            parts.push(`<span style="color:var(--error);font-weight:600">⚠ ${t('channels.pluginIncompatible') || '插件版本不兼容'}</span>`)
+            parts.push(`${t('channels.version')} <strong>${s.installedVersion || '?'}</strong>`)
+            parts.push(`<br><span style="color:var(--error);font-size:var(--font-size-xs)">${s.compatError || '请点击「一键安装插件」重新安装兼容版本'}</span>`)
+            if (installBtn) {
+              installBtn.textContent = t('channels.reinstallCompatible') || '重新安装兼容版本'
+              installBtn.style.background = 'var(--error)'
+            }
+          } else if (s.installed) {
             parts.push(`<span style="color:var(--success);font-weight:600">● ${t('channels.pluginInstalled')}</span>`)
             parts.push(`${t('channels.version')} <strong>${s.installedVersion || t('channels.unknown')}</strong>`)
             if (s.updateAvailable && s.latestVersion) {

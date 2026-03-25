@@ -1090,12 +1090,66 @@ pub async fn check_weixin_plugin_status() -> Result<Value, String> {
         _ => false,
     };
 
+    // 兼容性检查：检测插件是否能在当前 OpenClaw 版本下正常加载
+    let mut compatible = true;
+    let mut compat_error = String::new();
+    if installed {
+        // 检查插件引用的 SDK 模块是否存在（channel-config-schema 是 2026.3.14+ 新增的）
+        if let Some(cli_path) = crate::utils::resolve_openclaw_cli_path() {
+            let cli_dir = std::path::Path::new(&cli_path)
+                .parent()
+                .and_then(|p| p.parent())
+                .unwrap_or(std::path::Path::new(""));
+            let sdk_path = cli_dir
+                .join("dist")
+                .join("plugin-sdk")
+                .join("root-alias.cjs")
+                .join("channel-config-schema.js");
+            if !sdk_path.exists() {
+                // 也检查 npm 全局路径
+                let npm_sdk_exists = {
+                    #[cfg(target_os = "windows")]
+                    {
+                        std::env::var("APPDATA")
+                            .ok()
+                            .map(|appdata| {
+                                let base = std::path::PathBuf::from(appdata)
+                                    .join("npm")
+                                    .join("node_modules");
+                                ["openclaw", "@qingchencloud/openclaw-zh"]
+                                    .iter()
+                                    .any(|pkg| {
+                                        base.join(pkg)
+                                            .join("dist")
+                                            .join("plugin-sdk")
+                                            .join("root-alias.cjs")
+                                            .join("channel-config-schema.js")
+                                            .exists()
+                                    })
+                            })
+                            .unwrap_or(false)
+                    }
+                    #[cfg(not(target_os = "windows"))]
+                    {
+                        false
+                    }
+                };
+                if !npm_sdk_exists {
+                    compatible = false;
+                    compat_error = "插件版本与当前 OpenClaw 不兼容（缺少 channel-config-schema 模块），请点击「一键安装插件」重新安装兼容版本".to_string();
+                }
+            }
+        }
+    }
+
     Ok(json!({
         "installed": installed,
         "installedVersion": installed_version,
         "latestVersion": latest_version,
         "updateAvailable": update_available,
         "extensionDir": ext_dir.to_string_lossy(),
+        "compatible": compatible,
+        "compatError": compat_error,
     }))
 }
 
